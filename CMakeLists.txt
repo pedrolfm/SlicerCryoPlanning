@@ -20,6 +20,8 @@ include(${Slicer_USE_FILE})
 #-----------------------------------------------------------------------------
 # Extension modules
 add_subdirectory(CryoControl)
+add_subdirectory(ManualPlanning)
+add_subdirectory(ManualPlanning)
 ## NEXT_MODULE
 
 #-----------------------------------------------------------------------------
