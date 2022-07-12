@@ -134,16 +134,38 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.addObserver(slicer.mrmlScene, slicer.mrmlScene.StartCloseEvent, self.onSceneStartClose)
     self.addObserver(slicer.mrmlScene, slicer.mrmlScene.EndCloseEvent, self.onSceneEndClose)
 
+
+    self.ui.MarkupsWidget.toolTip = "Select a fiducial to use as the ASIS left point."
+    self.ui.MarkupsWidget.tableWidget().hide()
+    self.ui.MarkupsWidget.markupsSelectorComboBox().noneEnabled = True
+    self.ui.MarkupsWidget.markupsPlaceWidget().placeMultipleMarkups = (
+        slicer.qSlicerMarkupsPlaceWidget.ForcePlaceSingleMarkup
+    )
+    self.ui.MarkupsWidget.markupsPlaceWidget().buttonsVisible = False
+    self.ui.MarkupsWidget.markupsPlaceWidget().placeButton().show()
+    self.ui.MarkupsWidget.setMRMLScene(slicer.mrmlScene)
+
+
+    
+    self.ui.MarkupsWidget.connect("activeMarkupsPlaceModeChanged(bool)", self.updateMarkupFiducial)
+    
+    
+    
+    target_points = slicer.vtkMRMLMarkupsFiducialNode()
+    target_points.SetName('target')
+    slicer.mrmlScene.AddNode(target_points)
+
+
     # These connections ensure that whenever user changes some settings on the GUI, that is saved in the MRML scene
     # (in the selected parameter node).
-    self.ui.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
-    self.ui.outputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
-    self.ui.imageThresholdSliderWidget.connect("valueChanged(double)", self.updateParameterNodeFromGUI)
-    self.ui.invertOutputCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
-    self.ui.invertedOutputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+    #self.ui.inputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+    #self.ui.outputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+    #self.ui.imageThresholdSliderWidget.connect("valueChanged(double)", self.updateParameterNodeFromGUI)
+    #self.ui.invertOutputCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
+    #self.ui.invertedOutputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
 
     # Buttons
-    self.ui.applyButton.connect('clicked(bool)', self.onApplyButton)
+    #self.ui.applyButton.connect('clicked(bool)', self.onApplyButton)
 
     # Make sure parameter node is initialized (needed for module reload)
     self.initializeParameterNode()
@@ -232,19 +254,8 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self._updatingGUIFromParameterNode = True
 
     # Update node selectors and sliders
-    self.ui.inputSelector.setCurrentNode(self._parameterNode.GetNodeReference("InputVolume"))
-    self.ui.outputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
-    self.ui.invertedOutputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolumeInverse"))
-    self.ui.imageThresholdSliderWidget.value = float(self._parameterNode.GetParameter("Threshold"))
-    self.ui.invertOutputCheckBox.checked = (self._parameterNode.GetParameter("Invert") == "true")
 
-    # Update buttons states and tooltips
-    if self._parameterNode.GetNodeReference("InputVolume") and self._parameterNode.GetNodeReference("OutputVolume"):
-      self.ui.applyButton.toolTip = "Compute output volume"
-      self.ui.applyButton.enabled = True
-    else:
-      self.ui.applyButton.toolTip = "Select input and output volume nodes"
-      self.ui.applyButton.enabled = False
+
 
     # All the GUI updates are done
     self._updatingGUIFromParameterNode = False
@@ -268,6 +279,10 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     self._parameterNode.EndModify(wasModified)
 
+
+  def updateMarkupFiducial(self):
+    print("arrived here 3")
+  
   def onApplyButton(self):
     """
     Run processing when user clicks "Apply" button.

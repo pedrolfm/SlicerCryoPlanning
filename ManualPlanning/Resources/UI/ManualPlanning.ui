@@ -45,56 +45,15 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
-       <widget class="qSlicerMarkupsPlaceWidget" name="MarkupsPlaceWidget">
-        <property name="enabled">
-         <bool>true</bool>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Angle 1</string>
         </property>
-        <property name="mouseTracking">
-         <bool>true</bool>
-        </property>
-        <property name="placeModeEnabled">
-         <bool>false</bool>
-        </property>
-        <property name="placeModePersistency">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QTableWidget" name="tableWidget">
-        <property name="rowCount">
-         <number>0</number>
-        </property>
-        <property name="columnCount">
-         <number>3</number>
-        </property>
-        <column>
-         <property name="text">
-          <string>Needle</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Hole</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Depth</string>
-         </property>
-        </column>
        </widget>
       </item>
       <item row="3" column="1">
        <widget class="QSlider" name="horizontalSlider">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QSlider" name="horizontalSlider_2">
         <property name="orientation">
          <enum>Qt::Horizontal</enum>
         </property>
@@ -107,11 +66,33 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Angle 1</string>
+      <item row="4" column="1">
+       <widget class="QSlider" name="horizontalSlider_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="qSlicerSimpleMarkupsWidget" name="MarkupsWidget"/>
+      </item>
+      <item row="2" column="1">
+       <widget class="QTableWidget" name="tableWidget">
+        <column>
+         <property name="text">
+          <string>Needle #</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Hole</string>
+         </property>
+        </column>
+        <column>
+         <property name="text">
+          <string>Depth</string>
+         </property>
+        </column>
        </widget>
       </item>
      </layout>
@@ -199,9 +180,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>qSlicerMarkupsPlaceWidget</class>
+   <class>qSlicerSimpleMarkupsWidget</class>
    <extends>qSlicerWidget</extends>
-   <header>qSlicerMarkupsPlaceWidget.h</header>
+   <header>qSlicerSimpleMarkupsWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
