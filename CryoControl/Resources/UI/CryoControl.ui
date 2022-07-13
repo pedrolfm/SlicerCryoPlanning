@@ -12,8 +12,8 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="ctkCollapsibleButton" name="CollapsibleButton" native="true">
-     <property name="text" stdset="0">
+    <widget class="ctkCollapsibleButton" name="CollapsibleButton">
+     <property name="text">
       <string>Z-Frame registration</string>
      </property>
      <widget class="QLabel" name="label_3">
@@ -64,7 +64,7 @@
        <string>Registration not done</string>
       </property>
      </widget>
-     <widget class="qMRMLNodeComboBox" name="MRMLNodeComboBox_2" native="true">
+     <widget class="qMRMLNodeComboBox" name="MRMLNodeComboBox_2">
       <property name="geometry">
        <rect>
         <x>110</x>
@@ -77,8 +77,8 @@
     </widget>
    </item>
    <item>
-    <widget class="ctkCollapsibleButton" name="outputsCollapsibleButton" native="true">
-     <property name="text" stdset="0">
+    <widget class="ctkCollapsibleButton" name="outputsCollapsibleButton">
+     <property name="text">
       <string>Segment Target</string>
      </property>
      <layout class="QFormLayout" name="formLayout_4">
@@ -97,14 +97,14 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="qMRMLNodeComboBox" name="MRMLNodeComboBox" native="true"/>
+       <widget class="qMRMLNodeComboBox" name="MRMLNodeComboBox"/>
       </item>
      </layout>
     </widget>
    </item>
    <item>
-    <widget class="ctkCollapsibleButton" name="CollapsibleButton_2" native="true">
-     <property name="text" stdset="0">
+    <widget class="ctkCollapsibleButton" name="CollapsibleButton_2">
+     <property name="text">
       <string>Define location</string>
      </property>
      <widget class="QPushButton" name="manualPlanningButton">

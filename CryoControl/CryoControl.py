@@ -135,9 +135,10 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # Buttons
     self.ui.runRegistraionButton.connect('clicked(bool)', self.onApplyButton)
-    
-    
+        
     self.ui.runSegmentationButton.connect('clicked(bool)', self.onApplySegButton)
+    self.ui.manualPlanningButton.connect('clicked(bool)', self.onApplyManualButton)   
+    
 
     # Make sure parameter node is initialized (needed for module reload)
     self.initializeParameterNode()
@@ -225,20 +226,6 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # Make sure GUI changes do not call updateParameterNodeFromGUI (it could cause infinite loop)
     self._updatingGUIFromParameterNode = True
 
-    # Update node selectors and sliders
-    self.ui.inputSelector.setCurrentNode(self._parameterNode.GetNodeReference("InputVolume"))
-    self.ui.outputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolume"))
-    self.ui.invertedOutputSelector.setCurrentNode(self._parameterNode.GetNodeReference("OutputVolumeInverse"))
-    self.ui.imageThresholdSliderWidget.value = float(self._parameterNode.GetParameter("Threshold"))
-    self.ui.invertOutputCheckBox.checked = (self._parameterNode.GetParameter("Invert") == "true")
-
-    # Update buttons states and tooltips
-    if self._parameterNode.GetNodeReference("InputVolume") and self._parameterNode.GetNodeReference("OutputVolume"):
-      self.ui.applyButton.toolTip = "Compute output volume"
-      self.ui.applyButton.enabled = True
-    else:
-      self.ui.applyButton.toolTip = "Select input and output volume nodes"
-      self.ui.applyButton.enabled = False
 
     # All the GUI updates are done
     self._updatingGUIFromParameterNode = False
@@ -254,45 +241,23 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     wasModified = self._parameterNode.StartModify()  # Modify all properties in a single batch
 
-    self._parameterNode.SetNodeReferenceID("InputVolume", self.ui.inputSelector.currentNodeID)
-    self._parameterNode.SetNodeReferenceID("OutputVolume", self.ui.outputSelector.currentNodeID)
-    self._parameterNode.SetParameter("Threshold", str(self.ui.imageThresholdSliderWidget.value))
-    self._parameterNode.SetParameter("Invert", "true" if self.ui.invertOutputCheckBox.checked else "false")
-    self._parameterNode.SetNodeReferenceID("OutputVolumeInverse", self.ui.invertedOutputSelector.currentNodeID)
-
     self._parameterNode.EndModify(wasModified)
 
   def onApplyButton(self):
-    """
-    Run processing when user clicks "Apply" button.
-    """
-    print("arrived here")
-    
+
     zf = slicer.modules.zframeregistrationwithroi
     slicer.util.selectModule(zf)
-
-      # Compute output
-#      self.logic.process(self.ui.inputSelector.currentNode(), self.ui.outputSelector.currentNode(),
-#        self.ui.imageThresholdSliderWidget.value, self.ui.invertOutputCheckBox.checked)
-
-      # Compute inverted output (if needed)
-#      if self.ui.invertedOutputSelector.currentNode():
-        # If additional output volume is selected then result with inverted threshold is written there
-#        self.logic.process(self.ui.inputSelector.currentNode(), self.ui.invertedOutputSelector.currentNode(),
-#          self.ui.imageThresholdSliderWidget.value, not self.ui.invertOutputCheckBox.checked, showResult=False)
-
-  def onApplySegButton(self):
-    """
-    Run processing when user clicks "Apply" button.
-    """
-    print("arrived here 2")
+    self.ui.label_6.setText(" Registration done ")
     
+    
+  def onApplySegButton(self):    
     sg = slicer.modules.segmenteditor
     slicer.util.selectModule(sg)
 
 
-
-
+  def onApplyManualButton(self):   
+    manual = slicer.modules.manualplanning
+    slicer.util.selectModule(manual)
 
 #
 # CryoControlLogic

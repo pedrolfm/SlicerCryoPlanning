@@ -218,6 +218,23 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.logic.updateIceballPose(n,angle1,angle2,pos)
     else:
       print("no iceballs yet")
+      
+    #try:
+    transform = vtk.vtkTransform()
+    transform.RotateX(angle1)
+    transform.RotateY(angle2)
+    #TemplateTrans.SetMatrixTransformToParent(transform.GetMatrix())
+  
+    newTransform = vtk.vtkTransform()
+    mtx = vtk.vtkMatrix4x4()
+    self.zFrame.GetMatrixTransformToParent(mtx)
+    print(mtx)
+    vtk.vtkMatrix4x4.Multiply4x4(mtx,transform.GetMatrix(),newTransform.GetMatrix())
+    self.TemplateTrans.SetMatrixTransformToParent(newTransform.GetMatrix())
+    print(newTransform.GetMatrix())
+
+    #except:
+    #  print("no zFrame Registration")
         
 
   def showIceball(self):
@@ -235,14 +252,47 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
   def loadTemplate(self):
-  
-    _, self.zFrameModelNode = slicer.util.loadModel('/Users/pedro/Projects/AngulationPlanner/AngulatedInsertionPlanner/PathPlanner/Resources/templateLimits.vtk', returnNode=True)
-    slicer.mrmlScene.AddNode(self.zFrameModelNode)
-    self.zFrameModelNode.GetDisplayNode().SetSliceIntersectionVisibility(False)
-    self.zFrameModelNode.GetDisplayNode().SetSliceIntersectionThickness(3)
-    self.zFrameModelNode.GetDisplayNode().SetColor(1,1,0)
-    self.zFrameModelNode.GetDisplayNode().SetVisibility(False)
+    
+    try:
+      self.TemplateTrans = slicer.util.getNode('TemplateTrans')
+    except:
+      self.TemplateTrans = slicer.vtkMRMLLinearTransformNode()
+      self.TemplateTrans.SetName("TemplateTrans")
+      slicer.mrmlScene.AddNode(self.TemplateTrans)
+    try:
+      self.zFrame = slicer.util.getNode('*ZFrameTransform')
+    except:
+      self.zFrame = slicer.vtkMRMLLinearTransformNode()
+      self.zFrame.SetName("zFrame")
+      slicer.mrmlScene.AddNode(self.zFrame)
+    
+    try:
+      self.zFrameModelNode = slicer.util.getNode('Template')
+      self.zFrameModelNode.GetDisplayNode().SetVisibility(True)
+    except:
+      dirname = slicer.modules.manualplanning.path
+      filename = os.path.join(dirname[0:58], 'Resources/Template.stl')
+      _, self.zFrameModelNode = slicer.util.loadModel(filename, returnNode=True)
+      slicer.mrmlScene.AddNode(self.zFrameModelNode)
+      self.zFrameModelNode.SetName("Template")
+      self.zFrameModelNode.GetDisplayNode().SetSliceIntersectionVisibility(False)
+      self.zFrameModelNode.GetDisplayNode().SetSliceIntersectionThickness(3)
+      self.zFrameModelNode.GetDisplayNode().SetColor(1,1,0)
+      self.zFrameModelNode.GetDisplayNode().SetVisibility(True)
+    
+    
+    R = slicer.util.getNode('R*')
+    zFrame = slicer.util.getNode('ZFrameModel')
+    R.GetDisplayNode().SetVisibility(False)
+    zFrame.GetDisplayNode().SetVisibility(False)
+    
+    self.templatePose()
 
+
+
+  def templatePose(self):
+    zFrameTrans = slicer.util.getNode('TemplateTrans')
+    self.zFrameModelNode.SetAndObserveTransformNodeID(zFrameTrans.GetID())
 
 
 #TODO
@@ -274,22 +324,33 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def setEllipsoids(self):
     affectedBallArea = vtk.vtkParametricEllipsoid()
-    affectedBallArea.SetXRadius(float(20))
-    affectedBallArea.SetYRadius(float(30))
-    affectedBallArea.SetZRadius(float(40))
+    affectedBallArea.SetXRadius(float(10))
+    affectedBallArea.SetYRadius(float(10))
+    affectedBallArea.SetZRadius(float(16))
     affectedBallAreaSource = vtk.vtkParametricFunctionSource()
     affectedBallAreaSource.SetParametricFunction(affectedBallArea)
     affectedBallAreaSource.SetScalarModeToV()
     affectedBallAreaSource.Update()
     modelsLogic = slicer.modules.models.logic()
-    model = modelsLogic.AddModel(affectedBallAreaSource.GetOutput())
-    model.SetName("ellipse_1")
     
-    model2 = modelsLogic.AddModel(affectedBallAreaSource.GetOutput())
-    model2.SetName("ellipse_2")
+    try:
+      model = slicer.util.getNode('ellipse_1')
+    except:   
+      model = modelsLogic.AddModel(affectedBallAreaSource.GetOutput())
+      model.SetName("ellipse_1")
     
-    model3 = modelsLogic.AddModel(affectedBallAreaSource.GetOutput())
-    model3.SetName("ellipse_3")
+    try:
+      model2 = slicer.util.getNode('ellipse_2')
+    except:   
+      model2 = modelsLogic.AddModel(affectedBallAreaSource.GetOutput())
+      model2.SetName("ellipse_2")
+      
+    try:
+      model3 = slicer.util.getNode('ellipse_3')
+    except:   
+      model3 = modelsLogic.AddModel(affectedBallAreaSource.GetOutput())
+      model3.SetName("ellipse_3")    
+
 
 
     model.SetDisplayVisibility(0)
@@ -371,6 +432,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.ui.tableWidget.setItem(n , 0, qt.QTableWidgetItem(string_temp))
         string_temp = ("ellipse_%s") % (n+1)
         model = slicer.util.getNode(string_temp)
+        model.GetDisplayNode().SetSliceIntersectionVisibility(True)
         
         transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
         model.SetAndObserveTransformNodeID(transformNode.GetID())
@@ -378,7 +440,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         pos = [0,0,0]
         targetList.GetNthFiducialPosition(n,pos)
         
-        transform.Translate(pos[0], pos[1], pos[2])
+        transform.Translate(pos[0], pos[1], pos[2]-10)
         transformNode.SetMatrixTransformToParent(transform.GetMatrix())
 
   
