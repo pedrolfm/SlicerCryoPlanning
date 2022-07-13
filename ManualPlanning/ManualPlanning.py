@@ -6,7 +6,7 @@ import vtk
 import slicer
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
-
+import qt
 
 #
 # ManualPlanning
@@ -154,7 +154,15 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     target_points = slicer.vtkMRMLMarkupsFiducialNode()
     target_points.SetName('target')
     slicer.mrmlScene.AddNode(target_points)
+    
+    self.loadTemplate()
+    self.setEllipsoids()
 
+    self.ui.horizontalSlider.valueChanged.connect(self.onSliderChange)
+    self.ui.horizontalSlider_2.valueChanged.connect(self.onSliderChange)
+
+
+    self.ui.IceballcheckBox.connect("toggled(bool)", self.showIceball)
 
     # These connections ensure that whenever user changes some settings on the GUI, that is saved in the MRML scene
     # (in the selected parameter node).
@@ -197,6 +205,50 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # Parameter node will be reset, do not use it anymore
     self.setParameterNode(None)
 
+  def onSliderChange(self):
+    angle1 = self.ui.horizontalSlider.value
+    angle2 = self.ui.horizontalSlider_2.value
+    
+    targetList = slicer.util.getNode('target')
+    nOfPoint = targetList.GetNumberOfMarkups()
+    if (nOfPoint != 0):
+      for n in range(0,nOfPoint):
+        pos = [0,0,0]
+        targetList.GetNthFiducialPosition(n,pos)
+        self.logic.updateIceballPose(n,angle1,angle2,pos)
+    else:
+      print("no iceballs yet")
+        
+
+  def showIceball(self):
+    targetList = slicer.util.getNode('target')
+    nOfPoint = targetList.GetNumberOfMarkups()
+    for n in range(0,nOfPoint):
+    #rowPosition = self.ui.tableWidget.rowCount()
+      print(nOfPoint)
+      string_temp = ("ellipse_%s") % (n+1)
+      model = slicer.util.getNode(string_temp)
+      if self.ui.IceballcheckBox.isChecked():
+        model.SetDisplayVisibility(1)
+      else:
+        model.SetDisplayVisibility(0)
+
+
+  def loadTemplate(self):
+  
+    _, self.zFrameModelNode = slicer.util.loadModel('/Users/pedro/Projects/AngulationPlanner/AngulatedInsertionPlanner/PathPlanner/Resources/templateLimits.vtk', returnNode=True)
+    slicer.mrmlScene.AddNode(self.zFrameModelNode)
+    self.zFrameModelNode.GetDisplayNode().SetSliceIntersectionVisibility(False)
+    self.zFrameModelNode.GetDisplayNode().SetSliceIntersectionThickness(3)
+    self.zFrameModelNode.GetDisplayNode().SetColor(1,1,0)
+    self.zFrameModelNode.GetDisplayNode().SetVisibility(False)
+
+
+
+#TODO
+# fazer aqui uma funcao que envia os dois valores e o ponto para o logic e rotaciona os iceball tudo.
+
+
   def onSceneEndClose(self, caller, event):
     """
     Called just after the scene is closed.
@@ -219,6 +271,31 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       firstVolumeNode = slicer.mrmlScene.GetFirstNodeByClass("vtkMRMLScalarVolumeNode")
       if firstVolumeNode:
         self._parameterNode.SetNodeReferenceID("InputVolume", firstVolumeNode.GetID())
+
+  def setEllipsoids(self):
+    affectedBallArea = vtk.vtkParametricEllipsoid()
+    affectedBallArea.SetXRadius(float(20))
+    affectedBallArea.SetYRadius(float(30))
+    affectedBallArea.SetZRadius(float(40))
+    affectedBallAreaSource = vtk.vtkParametricFunctionSource()
+    affectedBallAreaSource.SetParametricFunction(affectedBallArea)
+    affectedBallAreaSource.SetScalarModeToV()
+    affectedBallAreaSource.Update()
+    modelsLogic = slicer.modules.models.logic()
+    model = modelsLogic.AddModel(affectedBallAreaSource.GetOutput())
+    model.SetName("ellipse_1")
+    
+    model2 = modelsLogic.AddModel(affectedBallAreaSource.GetOutput())
+    model2.SetName("ellipse_2")
+    
+    model3 = modelsLogic.AddModel(affectedBallAreaSource.GetOutput())
+    model3.SetName("ellipse_3")
+
+
+    model.SetDisplayVisibility(0)
+    model2.SetDisplayVisibility(0)
+    model3.SetDisplayVisibility(0)
+
 
   def setParameterNode(self, inputParameterNode):
     """
@@ -282,6 +359,29 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
   def updateMarkupFiducial(self):
     print("arrived here 3")
+    targetList = slicer.util.getNode('target')
+    nOfPoint = targetList.GetNumberOfMarkups()
+    self.ui.tableWidget.setRowCount(nOfPoint)
+    transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
+    
+    for n in range(0,nOfPoint):
+        #rowPosition = self.ui.tableWidget.rowCount()
+        print(nOfPoint)
+        string_temp = ("Needle #%s") % (n+1)
+        self.ui.tableWidget.setItem(n , 0, qt.QTableWidgetItem(string_temp))
+        string_temp = ("ellipse_%s") % (n+1)
+        model = slicer.util.getNode(string_temp)
+        
+        transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
+        model.SetAndObserveTransformNodeID(transformNode.GetID())
+        transform = vtk.vtkTransform()
+        pos = [0,0,0]
+        targetList.GetNthFiducialPosition(n,pos)
+        
+        transform.Translate(pos[0], pos[1], pos[2])
+        transformNode.SetMatrixTransformToParent(transform.GetMatrix())
+
+  
   
   def onApplyButton(self):
     """
@@ -360,6 +460,23 @@ class ManualPlanningLogic(ScriptedLoadableModuleLogic):
 
     stopTime = time.time()
     logging.info(f'Processing completed in {stopTime-startTime:.2f} seconds')
+
+
+
+  def updateIceballPose(self,n,ang1,ang2,pos):
+    print("got here"+str(n))
+    
+    string_temp = ("ellipse_%s") % (n+1)
+    model = slicer.util.getNode(string_temp)
+        
+    transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
+    model.SetAndObserveTransformNodeID(transformNode.GetID())
+    transform = vtk.vtkTransform()
+    print(pos)
+    transform.Translate(pos[0], pos[1], pos[2])
+    transform.RotateX(ang1)
+    transform.RotateY(ang2)
+    transformNode.SetMatrixTransformToParent(transform.GetMatrix())
 
 
 #
