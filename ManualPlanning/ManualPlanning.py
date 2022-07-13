@@ -228,10 +228,8 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     newTransform = vtk.vtkTransform()
     mtx = vtk.vtkMatrix4x4()
     self.zFrame.GetMatrixTransformToParent(mtx)
-    print(mtx)
     vtk.vtkMatrix4x4.Multiply4x4(mtx,transform.GetMatrix(),newTransform.GetMatrix())
     self.TemplateTrans.SetMatrixTransformToParent(newTransform.GetMatrix())
-    print(newTransform.GetMatrix())
 
     #except:
     #  print("no zFrame Registration")
@@ -265,7 +263,8 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.zFrame = slicer.vtkMRMLLinearTransformNode()
       self.zFrame.SetName("zFrame")
       slicer.mrmlScene.AddNode(self.zFrame)
-    
+      
+ 
     try:
       self.zFrameModelNode = slicer.util.getNode('Template')
       self.zFrameModelNode.GetDisplayNode().SetVisibility(True)
@@ -280,10 +279,14 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.zFrameModelNode.GetDisplayNode().SetColor(1,1,0)
       self.zFrameModelNode.GetDisplayNode().SetVisibility(True)
     
+    #self.zFrameModelNode.SetAndObserveTransformNodeID(self.zFrame.GetID())
+    #self.TemplateTrans.SetMatrixTransformToParent(self.zFrame)
+    mtx = vtk.vtkMatrix4x4()
+    self.zFrame.GetMatrixTransformToParent(mtx)
+    self.TemplateTrans.SetMatrixTransformToParent(mtx)
     
-    R = slicer.util.getNode('R*')
+    
     zFrame = slicer.util.getNode('ZFrameModel')
-    R.GetDisplayNode().SetVisibility(False)
     zFrame.GetDisplayNode().SetVisibility(False)
     
     self.templatePose()
