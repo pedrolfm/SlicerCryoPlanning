@@ -108,6 +108,9 @@
       <string>Define location</string>
      </property>
      <widget class="QPushButton" name="manualPlanningButton">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>0</x>
@@ -133,6 +136,9 @@
       </property>
      </widget>
      <widget class="QPushButton" name="autoPlanningButton">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
       <property name="geometry">
        <rect>
         <x>209</x>

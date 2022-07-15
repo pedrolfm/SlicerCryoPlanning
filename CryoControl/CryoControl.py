@@ -142,6 +142,8 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # Make sure parameter node is initialized (needed for module reload)
     self.initializeParameterNode()
+    
+    self.checkForNewVolumes()
 
   def cleanup(self):
     """
@@ -235,7 +237,6 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     This method is called when the user makes any change in the GUI.
     The changes are saved into the parameter node (so that they are restored when the scene is saved and loaded).
     """
-
     if self._parameterNode is None or self._updatingGUIFromParameterNode:
       return
 
@@ -247,7 +248,7 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     zf = slicer.modules.zframeregistrationwithroi
     slicer.util.selectModule(zf)
-    self.ui.label_6.setText(" Registration done ")
+
     
     
   def onApplySegButton(self):    
@@ -258,6 +259,23 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def onApplyManualButton(self):   
     manual = slicer.modules.manualplanning
     slicer.util.selectModule(manual)
+
+
+
+  def checkForNewVolumes(self):
+    # Check if there is a zFrame registration
+    try:
+      self.zFrame = slicer.util.getNode('*ZFrameTransform')
+      self.ui.label_6.setText(" Registration done ")
+      self.ui.manualPlanningButton.setEnabled(True)
+      self.ui.autoPlanningButton.setEnabled(True)
+    except:
+      self.ui.label_6.setText(" No Registration")
+      self.ui.manualPlanningButton.setEnabled(False)
+      self.ui.autoPlanningButton.setEnabled(False)
+    # Check again in 3000ms
+    qt.QTimer.singleShot(3000, self.checkForNewVolumes)
+
 
 #
 # CryoControlLogic
