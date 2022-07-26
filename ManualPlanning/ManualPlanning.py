@@ -148,18 +148,21 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     
     self.ui.MarkupsWidget.connect("activeMarkupsPlaceModeChanged(bool)", self.updateMarkupFiducial)
-    
-    
-    
-    target_points = slicer.vtkMRMLMarkupsFiducialNode()
-    target_points.SetName('target')
-    slicer.mrmlScene.AddNode(target_points)
+
+    try:
+      targetList = slicer.util.getNode('target')
+      targetList.RemoveAllMarkups()
+    except:
+      target_points = slicer.vtkMRMLMarkupsFiducialNode()
+      target_points.SetName('target')
+      slicer.mrmlScene.AddNode(target_points)
     
     self.loadTemplate()
     self.setEllipsoids()
 
     self.ui.horizontalSlider.valueChanged.connect(self.onSliderChange)
     self.ui.horizontalSlider_2.valueChanged.connect(self.onSliderChange)
+    self.ui.calculateButton.connect('clicked(bool)', self.onCalcButton)
 
 
     self.ui.IceballcheckBox.connect("toggled(bool)", self.showIceball)
@@ -234,6 +237,23 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     #except:
     #  print("no zFrame Registration")
         
+  def onCalcButton(self):
+    targetList = slicer.util.getNode('target')
+    nOfPoint = targetList.GetNumberOfMarkups()
+    transform = vtk.vtkMatrix4x4()
+    self.TemplateTrans.GetMatrixTransformToParent(transform)
+    transform.Invert()
+    for n in range(0,nOfPoint):
+      pos = [0, 0, 0]
+      targetList.GetNthFiducialPosition(n, pos)
+      temp_in = [pos[0], pos[1], pos[2], 1]
+      temp_out = [pos[0], pos[1], 13, 1]
+      transform.MultiplyPoint(temp_in,temp_out)
+      index_a = round(temp_out[0])
+      index_b = round(temp_out[1])
+      self.ui.tableWidget.setItem(n, 1, qt.QTableWidgetItem("("+str(index_a)+","+str(index_b) + ")"))
+      self.ui.tableWidget.setItem(n, 2, qt.QTableWidgetItem(str(int(-temp_out[2]))+" mm"))
+#TODO: calculate holes
 
   def showIceball(self):
     targetList = slicer.util.getNode('target')
@@ -270,7 +290,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.zFrameModelNode.GetDisplayNode().SetVisibility(True)
     except:
       dirname = slicer.modules.manualplanning.path
-      filename = os.path.join(dirname[0:58], 'Resources/Template.stl')
+      filename = os.path.join(dirname[0:58], 'Resources/New_template.stl')
       _, self.zFrameModelNode = slicer.util.loadModel(filename, returnNode=True)
       slicer.mrmlScene.AddNode(self.zFrameModelNode)
       self.zFrameModelNode.SetName("Template")
