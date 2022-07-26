@@ -8,6 +8,21 @@ from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 import qt
 
+TABLE = ([["(12,A)","(12,B)","(12,C)","(12,D)","(12,E)","(12,F)","(12,G)","(12,H)","(12,I)","(12,J)","(12,K)","(12,L)","(12,M)"],
+        ["(11,A)","(11,B)","(11,C)","(11,D)","(11,E)","(11,F)","(11,G)","(11,H)","(11,I)","(11,J)","(11,K)","(11,L)","(11,M)"],
+        ["(10,A)","(10,B)","(10,C)","(10,D)","(10,E)","(10,F)","(10,G)","(10,H)","(10,I)","(10,J)","(10,K)","(10,L)","(10,M)"],
+        ["(9,A)","(9,B)","(9,C)","(9,D)","(9,E)","(9,F)","(9,G)","(9,H)","(9,I)","(9,J)","(9,K),""(9,L)","(9,M)"],
+        ["(8,A)","(8,B)","(8,C)","(8,D)","(8,E)","(8,F)","(8,G)","(8,H)","(8,I)","(8,J)","(8,K)","(8,L)","(8,M)"],
+        ["(7,A)","(7,B)","(7,C)","(7,D)","(7,E)","(7,F)","(7,G)","(7,H)","(7,I)","(7,J)","(7,K)","(7,L)","(7,M)"],
+        ["(6,A)","(6,B)","(6,C)","(6,D)","(6,E)","(6,F)","(6,G)","(6,H)","(6,I)","(6,J)","(6,K)","(6,L)","(6,M)"],
+        ["(5,A)","(5,B)","(5,C)","(5,D)","(5,E)","(5,F)","(5,G)","(5,H)","(5,I)","(5,J)","(5,K)","(5,L)","(5,M)"],
+        ["(4,A)","(4,B)","(4,C)","(4,D)","(4,E)","(4,F)","(4,G)","(4,H)","(4,I)","(4,J)","(4,K)","(4,L)","(4,M)"],
+        ["(3,A)","(3,B)","(3,C)","(3,D)","(3,E)","(3,F)","(3,G)","(3,H)","(3,I)","(3,J)","(3,K)","(3,L)","(3,M)"],
+         ["(2,A)", "(2,B)", "(2,C)", "(2,D)", "(2,E)", "(2,F)", "(2,G)", "(2,H)", "(2,I)", "(2,J)", "(2,K)", "(2,L)",
+          "(2,M)"],
+         ["(1,A)", "(1,B)", "(1,C)", "(1,D)", "(1,E)", "(1,F)", "(1,G)", "(1,H)", "(1,I)", "(1,J)", "(1,K)", "(1,L)",
+          "(1,M)"]])
+
 #
 # ManualPlanning
 #
@@ -145,7 +160,9 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.MarkupsWidget.markupsPlaceWidget().placeButton().show()
     self.ui.MarkupsWidget.setMRMLScene(slicer.mrmlScene)
 
-
+#TODO:
+    # Save the angles in a text node, then CryoControl can get it
+    # Actually, it is better to start the text node in the cryocontrol and this code just grab and update
     
     self.ui.MarkupsWidget.connect("activeMarkupsPlaceModeChanged(bool)", self.updateMarkupFiducial)
 
@@ -159,6 +176,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     
     self.loadTemplate()
     self.setEllipsoids()
+    self.loadNeedleModel()
 
     self.ui.horizontalSlider.valueChanged.connect(self.onSliderChange)
     self.ui.horizontalSlider_2.valueChanged.connect(self.onSliderChange)
@@ -180,6 +198,27 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     # Make sure parameter node is initialized (needed for module reload)
     self.initializeParameterNode()
+
+
+
+  def loadNeedleModel(self):
+    try:
+      needle1 = slicer.util.getNode('needle_1')
+      needle1.RemoveAllMarkups()
+      needle2 = slicer.util.getNode('needle_2')
+      needle2.RemoveAllMarkups()
+      needle3 = slicer.util.getNode('needle_3')
+      needle3.RemoveAllMarkups()
+    except:
+      needle1 = slicer.vtkMRMLMarkupsFiducialNode()
+      needle1.SetName('needle_1')
+      slicer.mrmlScene.AddNode(needle1)
+      needle2 = slicer.vtkMRMLMarkupsFiducialNode()
+      needle2.SetName('needle_2')
+      slicer.mrmlScene.AddNode(needle2)
+      needle3 = slicer.vtkMRMLMarkupsFiducialNode()
+      needle3.SetName('needle_3')
+      slicer.mrmlScene.AddNode(needle3)
 
   def cleanup(self):
     """
@@ -211,7 +250,12 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def onSliderChange(self):
     angle1 = self.ui.horizontalSlider.value
     angle2 = self.ui.horizontalSlider_2.value
-    
+    self.ang1 = slicer.util.getNode('ang1')
+    self.ang2 = slicer.util.getNode('ang2')
+
+    self.ang2.SetText(str(angle2))
+    self.ang1.SetText(str(angle1))
+
     targetList = slicer.util.getNode('target')
     nOfPoint = targetList.GetNumberOfMarkups()
     if (nOfPoint != 0):
@@ -249,11 +293,32 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       temp_in = [pos[0], pos[1], pos[2], 1]
       temp_out = [pos[0], pos[1], 13, 1]
       transform.MultiplyPoint(temp_in,temp_out)
-      index_a = round(temp_out[0])
-      index_b = round(temp_out[1])
-      self.ui.tableWidget.setItem(n, 1, qt.QTableWidgetItem("("+str(index_a)+","+str(index_b) + ")"))
-      self.ui.tableWidget.setItem(n, 2, qt.QTableWidgetItem(str(int(-temp_out[2]))+" mm"))
-#TODO: calculate holes
+
+      if (temp_out[0] > 0):
+        index_a = round((temp_out[0])/5.0)
+      if (temp_out[0] < 0):
+        index_a = round((temp_out[0])/5.0)
+      if (temp_out[1] > 0):
+        index_b = round((temp_out[1])/5.0)
+      if (temp_out[1] < 0):
+        index_b = round((temp_out[1])/5.0)
+
+      self.ui.tableWidget.setItem(n, 1, qt.QTableWidgetItem(TABLE[index_a+7][index_b+7]))
+      self.ui.tableWidget.setItem(n, 2, qt.QTableWidgetItem(str(int(temp_out[2]))+" mm"))
+
+      needle1 = slicer.util.getNode('needle_1')
+
+      tip_pos = [index_a*5,index_b*5,temp_out[2],1.0]
+      base_pos = [index_a*5, index_b*5, 0, 1.0]
+      tip_out = [0 ,0, 0, 1]
+      base_out = [0, 0, 0, 1]
+      transform.Invert()
+      transform.MultiplyPoint(tip_pos, tip_out)
+      transform.MultiplyPoint(base_pos, base_out)
+
+      needle1.AddFiducial(tip_out[0], tip_out[1], tip_out[2])
+      needle1.AddFiducial(base_out[0], base_out[1], base_out[2])
+
 
   def showIceball(self):
     targetList = slicer.util.getNode('target')

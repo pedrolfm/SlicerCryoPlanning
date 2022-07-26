@@ -123,7 +123,22 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # in batch mode, without a graphical user interface.
     self.logic = CryoControlLogic()
 
-    # Connections
+    # Start the labels:
+    try:
+      self.ang1 = slicer.util.getNode('ang1')
+      self.ang2 = slicer.util.getNode('ang2')
+    except:
+      self.ang1 = slicer.vtkMRMLTextNode()
+      self.ang1.SetName("ang1")
+      self.ang1.SetText("0,0")
+      self.ang2 = slicer.vtkMRMLTextNode()
+      self.ang2.SetName("ang2")
+      self.ang2.SetText("0,0")
+      slicer.mrmlScene.AddNode(self.ang1)
+      slicer.mrmlScene.AddNode(self.ang2)
+
+    self.ui.label_ang1.setText(self.ang1.GetText())
+    self.ui.label_ang2.setText(self.ang2.GetText())
 
     # These connections ensure that we update parameter node when scene is closed
     self.addObserver(slicer.mrmlScene, slicer.mrmlScene.StartCloseEvent, self.onSceneStartClose)
@@ -138,12 +153,27 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         
     self.ui.runSegmentationButton.connect('clicked(bool)', self.onApplySegButton)
     self.ui.manualPlanningButton.connect('clicked(bool)', self.onApplyManualButton)   
-    
+    self.ui.oigtlButton.connect('clicked(bool)', self.onOigtlButton)
 
     # Make sure parameter node is initialized (needed for module reload)
     self.initializeParameterNode()
     
     self.checkForNewVolumes()
+
+  def onOigtlButton(self):
+    print("here")
+    try:
+      slicer.util.getNodesByClass('vtkMRMLIGTLConnectorNode')
+      self.cnode = slicer.util.getNode('OIGTL*')
+      print(' - openIGTLink already open -')
+    except:
+      self.cnode = slicer.vtkMRMLIGTLConnectorNode()
+      slicer.mrmlScene.AddNode(self.cnode)
+      self.cnode.SetTypeClient('192.168.7.2', 18944)
+      self.cnode.SetName("OIGTL")
+      self.cnode.Start()
+
+
 
   def cleanup(self):
     """
@@ -187,7 +217,7 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     # Parameter node stores all user choices in parameter values, node selections, etc.
     # so that when the scene is saved and reloaded, these settings are restored.
 
-    self.setParameterNode(self.logic.getParameterNode())
+    self.setParameterNode(self.ang1)
 
     # Select default input nodes if nothing is selected yet to save a few clicks for the user
     if not self._parameterNode.GetNodeReference("InputVolume"):
@@ -221,6 +251,9 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     This method is called whenever parameter node is changed.
     The module GUI is updated to show the current state of the parameter node.
     """
+
+    self.ui.label_ang1.setText(self.ang1.GetText())
+    self.ui.label_ang2.setText(self.ang2.GetText())
 
     if self._parameterNode is None or self._updatingGUIFromParameterNode:
       return
@@ -301,10 +334,7 @@ class CryoControlLogic(ScriptedLoadableModuleLogic):
     """
     Initialize parameter node with default settings.
     """
-    if not parameterNode.GetParameter("Threshold"):
-      parameterNode.SetParameter("Threshold", "100.0")
-    if not parameterNode.GetParameter("Invert"):
-      parameterNode.SetParameter("Invert", "false")
+    print("just checking")
 
   def process(self, inputVolume, outputVolume, imageThreshold, invert=False, showResult=True):
     """
