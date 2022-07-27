@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>515</width>
-    <height>849</height>
+    <height>766</height>
    </rect>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -243,7 +243,7 @@
      </widget>
      <widget class="QPushButton" name="sendAnglesButton">
       <property name="enabled">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
       <property name="geometry">
        <rect>
@@ -1676,7 +1676,7 @@
        <enum>Qt::RichText</enum>
       </property>
      </widget>
-     <widget class="QLabel" name="label_11">
+     <widget class="QLabel" name="current_ang1">
       <property name="geometry">
        <rect>
         <x>120</x>
@@ -1689,7 +1689,7 @@
        <string>XXX</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_12">
+     <widget class="QLabel" name="current_ang2">
       <property name="geometry">
        <rect>
         <x>270</x>
@@ -2160,7 +2160,7 @@
        <enum>Qt::RichText</enum>
       </property>
      </widget>
-     <widget class="QLabel" name="label_14">
+     <widget class="QLabel" name="desired_ang1">
       <property name="geometry">
        <rect>
         <x>120</x>
@@ -2631,7 +2631,7 @@
        <enum>Qt::RichText</enum>
       </property>
      </widget>
-     <widget class="QLabel" name="label_16">
+     <widget class="QLabel" name="desired_ang2">
       <property name="geometry">
        <rect>
         <x>270</x>
@@ -3104,7 +3104,7 @@
      </widget>
      <widget class="QPushButton" name="moveButton">
       <property name="enabled">
-       <bool>false</bool>
+       <bool>true</bool>
       </property>
       <property name="geometry">
        <rect>

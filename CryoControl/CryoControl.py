@@ -4,10 +4,11 @@ import logging
 import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
-
+import time
 #
 # CryoControl
 #
+RAD2DEG = 180.0/3.1415
 
 class CryoControl(ScriptedLoadableModule):
   """Uses ScriptedLoadableModule base class, available at:
@@ -130,15 +131,26 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     except:
       self.ang1 = slicer.vtkMRMLTextNode()
       self.ang1.SetName("ang1")
-      self.ang1.SetText("0,0")
+      self.ang1.SetText("0.0")
       self.ang2 = slicer.vtkMRMLTextNode()
       self.ang2.SetName("ang2")
-      self.ang2.SetText("0,0")
+      self.ang2.SetText("0.0")
       slicer.mrmlScene.AddNode(self.ang1)
       slicer.mrmlScene.AddNode(self.ang2)
 
+    try:
+      self.moveText = slicer.util.getNode('MOVE')
+    except:
+      self.moveText = slicer.vtkMRMLTextNode()
+      self.moveText.SetName("MOVE")
+      self.moveText.SetText("MOVE")
+      slicer.mrmlScene.AddNode(self.moveText)
+
+
     self.ui.label_ang1.setText(self.ang1.GetText())
     self.ui.label_ang2.setText(self.ang2.GetText())
+
+    self.onOigtlButton()
 
     # These connections ensure that we update parameter node when scene is closed
     self.addObserver(slicer.mrmlScene, slicer.mrmlScene.StartCloseEvent, self.onSceneStartClose)
@@ -154,11 +166,47 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.runSegmentationButton.connect('clicked(bool)', self.onApplySegButton)
     self.ui.manualPlanningButton.connect('clicked(bool)', self.onApplyManualButton)   
     self.ui.oigtlButton.connect('clicked(bool)', self.onOigtlButton)
+    self.ui.moveButton.connect('clicked(bool)', self.sendMove)
+    self.ui.sendAnglesButton.connect('clicked(bool)', self.sendAngle)
+
+    self.timer = qt.QTimer
+
+    self.timer.singleShot(2000, self.onTimeout)
 
     # Make sure parameter node is initialized (needed for module reload)
     self.initializeParameterNode()
     
     self.checkForNewVolumes()
+
+  def onTimeout(self):
+
+    if self.cnode.GetState() == 0:
+      print("no connection")
+    elif self.cnode.GetState() == 1:
+      print("no connection")
+    elif self.cnode.GetState() == 2:
+      try:
+        # get the motorPosition
+        tempString1 = slicer.util.getNode('motorPosition')
+        temp = tempString1.GetText()
+        motorPositions = temp.split(", ")
+        self.ui.current_ang1.setText(motorPositions[0][9:])
+        self.ui.current_ang2.setText(motorPositions[1])
+      except:
+        self.ui.current_ang1.setText("xx")
+        self.ui.current_ang2.setText("xx")
+      try:
+        # get the motorPosition
+        tempString2 = slicer.util.getNode('desiredPosition')
+        temp = tempString2.GetText()
+        desiredPositions = temp.split(",")
+        self.ui.desired_ang1.setText(str(round(float(desiredPositions[0])*RAD2DEG)))
+        self.ui.desired_ang2.setText(str(round(float(desiredPositions[1])*RAD2DEG)))
+      except:
+        self.ui.desired_ang1.setText("xx")
+        self.ui.desired_ang2.setText("xx")
+
+    self.timer.singleShot(2000, self.onTimeout)
 
   def onOigtlButton(self):
     print("here")
@@ -169,11 +217,53 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     except:
       self.cnode = slicer.vtkMRMLIGTLConnectorNode()
       slicer.mrmlScene.AddNode(self.cnode)
-      self.cnode.SetTypeClient('192.168.7.2', 18944)
+      self.cnode.SetTypeClient('172.23.145.193', 18944)
       self.cnode.SetName("OIGTL")
       self.cnode.Start()
 
+  def sendMove(self):
+    if self.cnode.GetState() == 2:
+      self.cnode.RegisterOutgoingMRMLNode(self.moveText)
+      self.cnode.PushNode(self.moveText)
+      time.sleep(0.1)
+      self.cnode.UnregisterOutgoingMRMLNode(self.moveText)
+      return True
+    else:
+      print(' Connection not stablished, check OpenIGTLink -')
+      return False
 
+  def sendAngle(self):
+
+    try:
+      angleTransformation = slicer.util.getNode('ANGLE')
+    except:
+      angleTransformation = slicer.vtkMRMLLinearTransformNode()
+      angleTransformation.SetName("ANGLE")
+      slicer.mrmlScene.AddNode(angleTransformation)
+
+    X = float(self.ang1.GetText())
+    Y = float(self.ang2.GetText())
+    print(X)
+    print(Y)
+    try:
+      vTransform = vtk.vtkTransform()
+      vTransform.RotateX(X)
+      vTransform.RotateY(Y)
+      angleTransformation.SetAndObserveMatrixTransformToParent(vTransform.GetMatrix())
+
+      if self.cnode.GetState() == 2:
+        self.cnode.RegisterOutgoingMRMLNode(angleTransformation)
+        self.cnode.PushNode(angleTransformation)
+        time.sleep(0.1)
+        self.cnode.UnregisterOutgoingMRMLNode(angleTransformation)
+        return True
+      else:
+        print(' Connection not stablished yet -')
+        return False
+    except:
+      #     e = sys.exc_info()
+      print('- Check openIGTLink connection-')
+      return False
 
   def cleanup(self):
     """

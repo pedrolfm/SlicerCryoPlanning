@@ -348,14 +348,14 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.zFrame = slicer.vtkMRMLLinearTransformNode()
       self.zFrame.SetName("zFrame")
       slicer.mrmlScene.AddNode(self.zFrame)
-      
- 
+
     try:
       self.zFrameModelNode = slicer.util.getNode('Template')
       self.zFrameModelNode.GetDisplayNode().SetVisibility(True)
     except:
       dirname = slicer.modules.manualplanning.path
-      filename = os.path.join(dirname[0:58], 'Resources/New_template.stl')
+      filename = os.path.join(dirname[0:55], 'Resources/New_template.stl')
+      print(filename)
       _, self.zFrameModelNode = slicer.util.loadModel(filename, returnNode=True)
       slicer.mrmlScene.AddNode(self.zFrameModelNode)
       self.zFrameModelNode.SetName("Template")
