@@ -8,7 +8,8 @@ from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 import qt
 
-TABLE = ([["(12,A)","(12,B)","(12,C)","(12,D)","(12,E)","(12,F)","(12,G)","(12,H)","(12,I)","(12,J)","(12,K)","(12,L)","(12,M)"],
+TABLE = ([["(13,A)","(13,B)","(13,C)","(13,D)","(13,E)","(13,F)","(13,G)","(13,H)","(13,I)","(13,J)","(13,K)","(13,L)","(13,M)"],
+        ["(12,A)","(12,B)","(12,C)","(12,D)","(12,E)","(12,F)","(12,G)","(12,H)","(12,I)","(12,J)","(12,K)","(12,L)","(12,M)"],
         ["(11,A)","(11,B)","(11,C)","(11,D)","(11,E)","(11,F)","(11,G)","(11,H)","(11,I)","(11,J)","(11,K)","(11,L)","(11,M)"],
         ["(10,A)","(10,B)","(10,C)","(10,D)","(10,E)","(10,F)","(10,G)","(10,H)","(10,I)","(10,J)","(10,K)","(10,L)","(10,M)"],
         ["(9,A)","(9,B)","(9,C)","(9,D)","(9,E)","(9,F)","(9,G)","(9,H)","(9,I)","(9,J)","(9,K),""(9,L)","(9,M)"],
@@ -209,6 +210,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       needle2.RemoveAllMarkups()
       needle3 = slicer.util.getNode('needle_3')
       needle3.RemoveAllMarkups()
+      self.holes = slicer.util.getNode('holes')
     except:
       needle1 = slicer.vtkMRMLMarkupsFiducialNode()
       needle1.SetName('needle_1')
@@ -219,6 +221,10 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       needle3 = slicer.vtkMRMLMarkupsFiducialNode()
       needle3.SetName('needle_3')
       slicer.mrmlScene.AddNode(needle3)
+
+      self.holes = slicer.vtkMRMLTextNode()
+      self.holes.SetName('holes')
+      slicer.mrmlScene.AddNode(self.holes)
 
   def cleanup(self):
     """
@@ -287,6 +293,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     transform = vtk.vtkMatrix4x4()
     self.TemplateTrans.GetMatrixTransformToParent(transform)
     transform.Invert()
+    temp_str = " "
     for n in range(0,nOfPoint):
       pos = [0, 0, 0]
       targetList.GetNthFiducialPosition(n, pos)
@@ -294,31 +301,37 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       temp_out = [pos[0], pos[1], 13, 1]
       transform.MultiplyPoint(temp_in,temp_out)
 
-      if (temp_out[0] > 0):
-        index_a = round((temp_out[0])/5.0)
-      if (temp_out[0] < 0):
-        index_a = round((temp_out[0])/5.0)
-      if (temp_out[1] > 0):
-        index_b = round((temp_out[1])/5.0)
-      if (temp_out[1] < 0):
-        index_b = round((temp_out[1])/5.0)
 
-      self.ui.tableWidget.setItem(n, 1, qt.QTableWidgetItem(TABLE[index_a+7][index_b+7]))
+      index_a = round((temp_out[0])/5.0)
+
+      index_b = round((temp_out[1])/5.0)
+
+      print(temp_out)
+      print(temp_in)
+      print(index_a)
+      print(index_b)
+
+      temp_str = temp_str+str(TABLE[index_b+6][index_a+6])+";"+str(int(temp_out[2]))+" mm"+";"
+
+      self.ui.tableWidget.setItem(n, 1, qt.QTableWidgetItem(TABLE[index_b+6][index_a+6]))
       self.ui.tableWidget.setItem(n, 2, qt.QTableWidgetItem(str(int(temp_out[2]))+" mm"))
 
-      needle1 = slicer.util.getNode('needle_1')
 
-      tip_pos = [index_a*5,index_b*5,temp_out[2],1.0]
-      base_pos = [index_a*5, index_b*5, 0, 1.0]
-      tip_out = [0 ,0, 0, 1]
-      base_out = [0, 0, 0, 1]
-      transform.Invert()
-      transform.MultiplyPoint(tip_pos, tip_out)
-      transform.MultiplyPoint(base_pos, base_out)
 
-      needle1.AddFiducial(tip_out[0], tip_out[1], tip_out[2])
-      needle1.AddFiducial(base_out[0], base_out[1], base_out[2])
-
+      # temp_needle = "needle_"+str(n+1)
+      # print(temp_needle)
+      # needle1 = slicer.util.getNode(temp_needle)
+      # tip_pos = [index_a*5,index_b*5,temp_out[2],1.0]
+      # base_pos = [index_a*5, index_b*5, 0, 1.0]
+      # tip_out = [0 ,0, 0, 1]
+      # base_out = [0, 0, 0, 1]
+      # transform.Invert()
+      # transform.MultiplyPoint(tip_pos, tip_out)
+      # transform.MultiplyPoint(base_pos, base_out)
+      #
+      # needle1.AddFiducial(tip_out[0], tip_out[1], tip_out[2])
+      # needle1.AddFiducial(base_out[0], base_out[1], base_out[2])
+    self.holes.SetText(temp_str)
 
   def showIceball(self):
     targetList = slicer.util.getNode('target')
@@ -354,7 +367,8 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.zFrameModelNode.GetDisplayNode().SetVisibility(True)
     except:
       dirname = slicer.modules.manualplanning.path
-      filename = os.path.join(dirname[0:55], 'Resources/New_template.stl')
+      #55 and 58
+      filename = os.path.join(dirname[0:58], 'Resources/New_template.stl')
       print(filename)
       _, self.zFrameModelNode = slicer.util.loadModel(filename, returnNode=True)
       slicer.mrmlScene.AddNode(self.zFrameModelNode)

@@ -167,11 +167,12 @@
        </rect>
       </property>
       <property name="rowCount">
-       <number>2</number>
+       <number>3</number>
       </property>
       <property name="columnCount">
        <number>3</number>
       </property>
+      <row/>
       <row/>
       <row/>
       <column>

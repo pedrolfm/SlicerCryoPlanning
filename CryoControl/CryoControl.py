@@ -181,9 +181,11 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
   def onTimeout(self):
 
     if self.cnode.GetState() == 0:
-      print("no connection")
+      a=0
+      #print("no connection")
     elif self.cnode.GetState() == 1:
-      print("no connection")
+      a=0
+      #print("no connection")
     elif self.cnode.GetState() == 2:
       try:
         # get the motorPosition
@@ -205,6 +207,19 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       except:
         self.ui.desired_ang1.setText("xx")
         self.ui.desired_ang2.setText("xx")
+
+    #try:
+    holes = slicer.util.getNode('holes')
+    temp = holes.GetText()
+    var = temp.split(";")
+    nOfNeedles = int((len(var)-1)/2)
+    print("xxx"+str(nOfNeedles))
+    for n in range(0,nOfNeedles):
+      self.ui.tableWidget.setItem(n, 1, qt.QTableWidgetItem(var[2*n]))
+      self.ui.tableWidget.setItem(n, 2, qt.QTableWidgetItem(var[2*n+1]))
+      #self.ui.tableWidget.setItem(n, 2, qt.QTableWidgetItem(str(int(temp_out[2])) + " mm"))
+    #except:
+    #  a=0
 
     self.timer.singleShot(2000, self.onTimeout)
 
