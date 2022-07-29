@@ -140,11 +140,16 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     try:
       self.moveText = slicer.util.getNode('MOVE')
+      self.recText = slicer.util.getNode('RECONNECT')
     except:
       self.moveText = slicer.vtkMRMLTextNode()
       self.moveText.SetName("MOVE")
       self.moveText.SetText("MOVE")
       slicer.mrmlScene.AddNode(self.moveText)
+      self.recText = slicer.vtkMRMLTextNode()
+      self.recText.SetName("RECONNECT")
+      self.recText.SetText("RECONNECT")
+      slicer.mrmlScene.AddNode(self.recText)
 
 
     self.ui.label_ang1.setText(self.ang1.GetText())
@@ -168,6 +173,7 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.ui.oigtlButton.connect('clicked(bool)', self.onOigtlButton)
     self.ui.moveButton.connect('clicked(bool)', self.sendMove)
     self.ui.sendAnglesButton.connect('clicked(bool)', self.sendAngle)
+    self.ui.reconnectButton.connect('clicked(bool)', self.sendReconnect)
 
     self.timer = qt.QTimer
 
@@ -213,7 +219,6 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     temp = holes.GetText()
     var = temp.split(";")
     nOfNeedles = int((len(var)-1)/2)
-    print("xxx"+str(nOfNeedles))
     for n in range(0,nOfNeedles):
       self.ui.tableWidget.setItem(n, 1, qt.QTableWidgetItem(var[2*n]))
       self.ui.tableWidget.setItem(n, 2, qt.QTableWidgetItem(var[2*n+1]))
@@ -224,7 +229,6 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.timer.singleShot(2000, self.onTimeout)
 
   def onOigtlButton(self):
-    print("here")
     try:
       slicer.util.getNodesByClass('vtkMRMLIGTLConnectorNode')
       self.cnode = slicer.util.getNode('OIGTL*')
@@ -232,7 +236,7 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     except:
       self.cnode = slicer.vtkMRMLIGTLConnectorNode()
       slicer.mrmlScene.AddNode(self.cnode)
-      self.cnode.SetTypeClient('172.23.145.193', 18944)
+      self.cnode.SetTypeClient('192.168.6.2', 18944)
       self.cnode.SetName("OIGTL")
       self.cnode.Start()
 
@@ -247,6 +251,18 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       print(' Connection not stablished, check OpenIGTLink -')
       return False
 
+  def sendReconnect(self):
+    if self.cnode.GetState() == 2:
+      self.cnode.RegisterOutgoingMRMLNode(self.recText)
+      self.cnode.PushNode(self.recText)
+      time.sleep(0.1)
+      self.cnode.UnregisterOutgoingMRMLNode(self.recText)
+      return True
+    else:
+      print(' Connection not stablished, check OpenIGTLink -')
+      return False
+
+
   def sendAngle(self):
 
     try:
@@ -258,8 +274,6 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     X = float(self.ang1.GetText())
     Y = float(self.ang2.GetText())
-    print(X)
-    print(Y)
     try:
       vTransform = vtk.vtkTransform()
       vTransform.RotateX(X)

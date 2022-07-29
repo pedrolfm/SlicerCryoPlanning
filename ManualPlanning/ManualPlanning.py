@@ -8,6 +8,10 @@ from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 import qt
 
+HORIZONTAL = -40.0
+VERTICAL = -87.0
+
+
 TABLE = ([["(13,A)","(13,B)","(13,C)","(13,D)","(13,E)","(13,F)","(13,G)","(13,H)","(13,I)","(13,J)","(13,K)","(13,L)","(13,M)"],
         ["(12,A)","(12,B)","(12,C)","(12,D)","(12,E)","(12,F)","(12,G)","(12,H)","(12,I)","(12,J)","(12,K)","(12,L)","(12,M)"],
         ["(11,A)","(11,B)","(11,C)","(11,D)","(11,E)","(11,F)","(11,G)","(11,H)","(11,I)","(11,J)","(11,K)","(11,L)","(11,M)"],
@@ -276,13 +280,20 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     transform = vtk.vtkTransform()
     transform.RotateX(angle1)
     transform.RotateY(angle2)
-    #TemplateTrans.SetMatrixTransformToParent(transform.GetMatrix())
+    #TemplateTrans.SetMatrixTransformToParent(transform.GetMatrix())s
   
     newTransform = vtk.vtkTransform()
     mtx = vtk.vtkMatrix4x4()
-    self.zFrame.GetMatrixTransformToParent(mtx)
-    vtk.vtkMatrix4x4.Multiply4x4(mtx,transform.GetMatrix(),newTransform.GetMatrix())
-    self.TemplateTrans.SetMatrixTransformToParent(newTransform.GetMatrix())
+    mtx = self.transformZframe(mtx)
+
+    mtx2 = vtk.vtkMatrix4x4()
+    self.zFrame.GetMatrixTransformToParent(mtx2)
+
+    newTransform = vtk.vtkMatrix4x4()
+    vtk.vtkMatrix4x4.Multiply4x4(mtx2,mtx,newTransform)
+
+    vtk.vtkMatrix4x4.Multiply4x4(newTransform,transform.GetMatrix(),newTransform)
+    self.TemplateTrans.SetMatrixTransformToParent(newTransform)
 
     #except:
     #  print("no zFrame Registration")
@@ -306,10 +317,6 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       index_b = round((temp_out[1])/5.0)
 
-      print(temp_out)
-      print(temp_in)
-      print(index_a)
-      print(index_b)
 
       temp_str = temp_str+str(TABLE[index_b+6][index_a+6])+";"+str(int(temp_out[2]))+" mm"+";"
 
@@ -318,19 +325,19 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
 
-      # temp_needle = "needle_"+str(n+1)
+      temp_needle = "needle_"+str(n+1)
       # print(temp_needle)
-      # needle1 = slicer.util.getNode(temp_needle)
-      # tip_pos = [index_a*5,index_b*5,temp_out[2],1.0]
-      # base_pos = [index_a*5, index_b*5, 0, 1.0]
-      # tip_out = [0 ,0, 0, 1]
-      # base_out = [0, 0, 0, 1]
-      # transform.Invert()
-      # transform.MultiplyPoint(tip_pos, tip_out)
-      # transform.MultiplyPoint(base_pos, base_out)
+      needle1 = slicer.util.getNode(temp_needle)
+      tip_pos = [index_a*5,index_b*5,temp_out[2],1.0]
+      base_pos = [index_a*5, index_b*5, 0, 1.0]
+      tip_out = [0 ,0, 0, 1]
+      base_out = [0, 0, 0, 1]
+      transform.Invert()
+      transform.MultiplyPoint(tip_pos, tip_out)
+      transform.MultiplyPoint(base_pos, base_out)
       #
-      # needle1.AddFiducial(tip_out[0], tip_out[1], tip_out[2])
-      # needle1.AddFiducial(base_out[0], base_out[1], base_out[2])
+      needle1.AddFiducial(tip_out[0], tip_out[1], tip_out[2])
+      needle1.AddFiducial(base_out[0], base_out[1], base_out[2])
     self.holes.SetText(temp_str)
 
   def showIceball(self):
@@ -338,13 +345,36 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     nOfPoint = targetList.GetNumberOfMarkups()
     for n in range(0,nOfPoint):
     #rowPosition = self.ui.tableWidget.rowCount()
-      print(nOfPoint)
+
       string_temp = ("ellipse_%s") % (n+1)
       model = slicer.util.getNode(string_temp)
       if self.ui.IceballcheckBox.isChecked():
         model.SetDisplayVisibility(1)
       else:
         model.SetDisplayVisibility(0)
+
+  def transformZframe(self, zFrame):
+    _rotation = vtk.vtkMatrix4x4()
+    _translation = vtk.vtkMatrix4x4()
+
+    _translation.Identity()
+    _translation.SetElement(1, 3, HORIZONTAL)
+    _translation.SetElement(2, 3, VERTICAL)
+
+    _rotation.Identity()
+    _rotation.SetElement(1, 1, 0.0)
+    _rotation.SetElement(1, 2, -1.0)
+    _rotation.SetElement(2, 1, 1.0)
+    _rotation.SetElement(2, 2, 0.0)
+
+    _temp = vtk.vtkMatrix4x4()
+    rotatedZframe = vtk.vtkMatrix4x4()
+
+    vtk.vtkMatrix4x4.Multiply4x4(zFrame, _rotation, _temp)
+    vtk.vtkMatrix4x4.Multiply4x4(_translation, _temp, rotatedZframe)
+
+    return rotatedZframe
+
 
 
   def loadTemplate(self):
@@ -357,10 +387,27 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       slicer.mrmlScene.AddNode(self.TemplateTrans)
     try:
       self.zFrame = slicer.util.getNode('*ZFrameTransform')
+      #_translation = vtk.vtkMatrix4x4()
+      #_translation.Identity()
+      #self.zFrame.SetMatrixTransformToParent(_translation)
     except:
       self.zFrame = slicer.vtkMRMLLinearTransformNode()
       self.zFrame.SetName("zFrame")
       slicer.mrmlScene.AddNode(self.zFrame)
+
+    newTransform = vtk.vtkTransform()
+    mtx = vtk.vtkMatrix4x4()
+    mtx = self.transformZframe(mtx)
+
+    mtx2 = vtk.vtkMatrix4x4()
+    self.zFrame.GetMatrixTransformToParent(mtx2)
+
+    newTransform = vtk.vtkMatrix4x4()
+    vtk.vtkMatrix4x4.Multiply4x4(mtx2,mtx,newTransform)
+
+    #self.zFrame.SetMatrixTransformToParent(newTransform)
+    self.TemplateTrans.SetMatrixTransformToParent(newTransform)
+
 
     try:
       self.zFrameModelNode = slicer.util.getNode('Template')
@@ -368,8 +415,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     except:
       dirname = slicer.modules.manualplanning.path
       #55 and 58
-      filename = os.path.join(dirname[0:58], 'Resources/New_template.stl')
-      print(filename)
+      filename = os.path.join(dirname[0:55], 'Resources/New_template.stl')
       _, self.zFrameModelNode = slicer.util.loadModel(filename, returnNode=True)
       slicer.mrmlScene.AddNode(self.zFrameModelNode)
       self.zFrameModelNode.SetName("Template")
@@ -380,9 +426,9 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     
     #self.zFrameModelNode.SetAndObserveTransformNodeID(self.zFrame.GetID())
     #self.TemplateTrans.SetMatrixTransformToParent(self.zFrame)
-    mtx = vtk.vtkMatrix4x4()
-    self.zFrame.GetMatrixTransformToParent(mtx)
-    self.TemplateTrans.SetMatrixTransformToParent(mtx)
+    #mtx = vtk.vtkMatrix4x4()
+    #self.zFrame.GetMatrixTransformToParent(mtx)
+    #self.TemplateTrans.SetMatrixTransformToParent(mtx)
     
     
     zFrame = slicer.util.getNode('ZFrameModel')
@@ -521,15 +567,12 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
 
   def updateMarkupFiducial(self):
-    print("arrived here 3")
     targetList = slicer.util.getNode('target')
     nOfPoint = targetList.GetNumberOfMarkups()
     self.ui.tableWidget.setRowCount(nOfPoint)
     transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
     
     for n in range(0,nOfPoint):
-        #rowPosition = self.ui.tableWidget.rowCount()
-        print(nOfPoint)
         string_temp = ("Needle #%s") % (n+1)
         self.ui.tableWidget.setItem(n , 0, qt.QTableWidgetItem(string_temp))
         string_temp = ("ellipse_%s") % (n+1)
@@ -628,15 +671,12 @@ class ManualPlanningLogic(ScriptedLoadableModuleLogic):
 
 
   def updateIceballPose(self,n,ang1,ang2,pos):
-    print("got here"+str(n))
-    
     string_temp = ("ellipse_%s") % (n+1)
     model = slicer.util.getNode(string_temp)
         
     transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
     model.SetAndObserveTransformNodeID(transformNode.GetID())
     transform = vtk.vtkTransform()
-    print(pos)
     transform.Translate(pos[0], pos[1], pos[2])
     transform.RotateX(ang1)
     transform.RotateY(ang2)
