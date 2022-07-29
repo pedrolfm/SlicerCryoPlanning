@@ -8,6 +8,16 @@ import time
 #
 # CryoControl
 #
+
+
+# List of To Do
+# Change from encoder pulse to deg.
+# finalize table on cryocontrol
+# PAth to template model
+# check limits of index hole -> important
+#
+
+
 RAD2DEG = 180.0/3.1415
 
 class CryoControl(ScriptedLoadableModule):
@@ -141,6 +151,7 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     try:
       self.moveText = slicer.util.getNode('MOVE')
       self.recText = slicer.util.getNode('RECONNECT')
+      self.holes = slicer.util.getNode('holes')
     except:
       self.moveText = slicer.vtkMRMLTextNode()
       self.moveText.SetName("MOVE")
@@ -150,6 +161,9 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       self.recText.SetName("RECONNECT")
       self.recText.SetText("RECONNECT")
       slicer.mrmlScene.AddNode(self.recText)
+      self.holes = slicer.vtkMRMLTextNode()
+      self.holes.SetName('holes')
+      slicer.mrmlScene.AddNode(self.holes)
 
 
     self.ui.label_ang1.setText(self.ang1.GetText())

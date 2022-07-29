@@ -317,6 +317,9 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       index_b = round((temp_out[1])/5.0)
 
+      print(temp_out)
+      print(index_a)
+      print(index_b)
 
       temp_str = temp_str+str(TABLE[index_b+6][index_a+6])+";"+str(int(temp_out[2]))+" mm"+";"
 
@@ -338,6 +341,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       #
       needle1.AddFiducial(tip_out[0], tip_out[1], tip_out[2])
       needle1.AddFiducial(base_out[0], base_out[1], base_out[2])
+      transform.Invert()
     self.holes.SetText(temp_str)
 
   def showIceball(self):
