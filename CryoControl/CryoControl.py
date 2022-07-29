@@ -11,11 +11,11 @@ import time
 
 
 # List of To Do
-# Change from encoder pulse to deg.
-# finalize table on cryocontrol
+#
+# rotation of iceball is wrong on angle 2
 # PAth to template model
 # check limits of index hole -> important
-#
+# vizualize needle path
 
 
 RAD2DEG = 180.0/3.1415
@@ -212,8 +212,14 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         tempString1 = slicer.util.getNode('motorPosition')
         temp = tempString1.GetText()
         motorPositions = temp.split(", ")
-        self.ui.current_ang1.setText(motorPositions[0][9:])
-        self.ui.current_ang2.setText(motorPositions[1])
+        current1 = (float(motorPositions[1])/477.0)*RAD2DEG
+        current2 = (float(motorPositions[0][9,:])/477.0)*RAD2DEG
+
+        self.ui.current_ang1.setText(str(current1))
+        self.ui.current_ang2.setText(str(current2))
+
+        #self.ui.current_ang1.setText(motorPositions[0][9:])
+        #self.ui.current_ang2.setText(motorPositions[1])
       except:
         self.ui.current_ang1.setText("xx")
         self.ui.current_ang2.setText("xx")
@@ -236,7 +242,7 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     for n in range(0,nOfNeedles):
       self.ui.tableWidget.setItem(n, 1, qt.QTableWidgetItem(var[2*n]))
       self.ui.tableWidget.setItem(n, 2, qt.QTableWidgetItem(var[2*n+1]))
-      #self.ui.tableWidget.setItem(n, 2, qt.QTableWidgetItem(str(int(temp_out[2])) + " mm"))
+      self.ui.tableWidget.setItem(n, 0, qt.QTableWidgetItem("Needle "+str(n+1)))
     #except:
     #  a=0
 

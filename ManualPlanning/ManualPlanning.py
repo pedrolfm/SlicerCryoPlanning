@@ -155,7 +155,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     self.addObserver(slicer.mrmlScene, slicer.mrmlScene.EndCloseEvent, self.onSceneEndClose)
 
 
-    self.ui.MarkupsWidget.toolTip = "Select a fiducial to use as the ASIS left point."
+    self.ui.MarkupsWidget.toolTip = "Select a target location"
     self.ui.MarkupsWidget.tableWidget().hide()
     self.ui.MarkupsWidget.markupsSelectorComboBox().noneEnabled = True
     self.ui.MarkupsWidget.markupsPlaceWidget().placeMultipleMarkups = (
@@ -331,6 +331,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       temp_needle = "needle_"+str(n+1)
       # print(temp_needle)
       needle1 = slicer.util.getNode(temp_needle)
+      needle1.RemoveAllMarkups()
       tip_pos = [index_a*5,index_b*5,temp_out[2],1.0]
       base_pos = [index_a*5, index_b*5, 0, 1.0]
       tip_out = [0 ,0, 0, 1]
