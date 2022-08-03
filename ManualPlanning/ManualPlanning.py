@@ -8,6 +8,7 @@ from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 import qt
 
+
 HORIZONTAL = -40.0
 VERTICAL = -87.0
 
@@ -197,6 +198,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     #self.ui.imageThresholdSliderWidget.connect("valueChanged(double)", self.updateParameterNodeFromGUI)
     #self.ui.invertOutputCheckBox.connect("toggled(bool)", self.updateParameterNodeFromGUI)
     #self.ui.invertedOutputSelector.connect("currentNodeChanged(vtkMRMLNode*)", self.updateParameterNodeFromGUI)
+
 
     # Buttons
     #self.ui.applyButton.connect('clicked(bool)', self.onApplyButton)

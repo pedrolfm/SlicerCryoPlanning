@@ -5,7 +5,8 @@ import vtk, qt, ctk, slicer
 from slicer.ScriptedLoadableModule import *
 from slicer.util import VTKObservationMixin
 import time
-#
+from datetime import datetime
+import csv
 # CryoControl
 #
 
@@ -193,13 +194,21 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
     self.timer.singleShot(2000, self.onTimeout)
 
+    now = datetime.now()
+
+    current_time = now.strftime("%H:%M:%S")
+    # Creating and Configuring Logger
+    filename = "/Users/pedro/Documents/Log%s.csv" % current_time
+    self.file = open(filename, 'w')
+    self.writer = csv.writer(self.file)
+
+
     # Make sure parameter node is initialized (needed for module reload)
     self.initializeParameterNode()
     
     self.checkForNewVolumes()
 
   def onTimeout(self):
-
     if self.cnode.GetState() == 0:
       a=0
       #print("no connection")
@@ -212,9 +221,8 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         tempString1 = slicer.util.getNode('motorPosition')
         temp = tempString1.GetText()
         motorPositions = temp.split(", ")
-        current1 = (float(motorPositions[1])/477.0)*RAD2DEG
-        current2 = (float(motorPositions[0][9,:])/477.0)*RAD2DEG
-
+        current1 = (float(motorPositions[1])/7500.0)*RAD2DEG
+        current2 = (float(motorPositions[0].split(" ")[2])/477.0)*RAD2DEG
         self.ui.current_ang1.setText(str(current1))
         self.ui.current_ang2.setText(str(current2))
 
