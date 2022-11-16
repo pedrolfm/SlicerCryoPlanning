@@ -9,25 +9,38 @@ from slicer.util import VTKObservationMixin
 import qt
 
 
-HORIZONTAL = -40.0
-VERTICAL = -87.0
+# Z Frame offset:
+HORIZONTAL = -64.25 #-68.3 # Reviewed on Nov 11 2022, white board used for animal experiments, one line of lego bricks
+VERTICAL = -103.5
+OFFSET = 13.0 #tempalte width
 
 
-TABLE = ([["(13,A)","(13,B)","(13,C)","(13,D)","(13,E)","(13,F)","(13,G)","(13,H)","(13,I)","(13,J)","(13,K)","(13,L)","(13,M)"],
-        ["(12,A)","(12,B)","(12,C)","(12,D)","(12,E)","(12,F)","(12,G)","(12,H)","(12,I)","(12,J)","(12,K)","(12,L)","(12,M)"],
-        ["(11,A)","(11,B)","(11,C)","(11,D)","(11,E)","(11,F)","(11,G)","(11,H)","(11,I)","(11,J)","(11,K)","(11,L)","(11,M)"],
-        ["(10,A)","(10,B)","(10,C)","(10,D)","(10,E)","(10,F)","(10,G)","(10,H)","(10,I)","(10,J)","(10,K)","(10,L)","(10,M)"],
-        ["(9,A)","(9,B)","(9,C)","(9,D)","(9,E)","(9,F)","(9,G)","(9,H)","(9,I)","(9,J)","(9,K),""(9,L)","(9,M)"],
-        ["(8,A)","(8,B)","(8,C)","(8,D)","(8,E)","(8,F)","(8,G)","(8,H)","(8,I)","(8,J)","(8,K)","(8,L)","(8,M)"],
-        ["(7,A)","(7,B)","(7,C)","(7,D)","(7,E)","(7,F)","(7,G)","(7,H)","(7,I)","(7,J)","(7,K)","(7,L)","(7,M)"],
-        ["(6,A)","(6,B)","(6,C)","(6,D)","(6,E)","(6,F)","(6,G)","(6,H)","(6,I)","(6,J)","(6,K)","(6,L)","(6,M)"],
-        ["(5,A)","(5,B)","(5,C)","(5,D)","(5,E)","(5,F)","(5,G)","(5,H)","(5,I)","(5,J)","(5,K)","(5,L)","(5,M)"],
-        ["(4,A)","(4,B)","(4,C)","(4,D)","(4,E)","(4,F)","(4,G)","(4,H)","(4,I)","(4,J)","(4,K)","(4,L)","(4,M)"],
-        ["(3,A)","(3,B)","(3,C)","(3,D)","(3,E)","(3,F)","(3,G)","(3,H)","(3,I)","(3,J)","(3,K)","(3,L)","(3,M)"],
-         ["(2,A)", "(2,B)", "(2,C)", "(2,D)", "(2,E)", "(2,F)", "(2,G)", "(2,H)", "(2,I)", "(2,J)", "(2,K)", "(2,L)",
-          "(2,M)"],
-         ["(1,A)", "(1,B)", "(1,C)", "(1,D)", "(1,E)", "(1,F)", "(1,G)", "(1,H)", "(1,I)", "(1,J)", "(1,K)", "(1,L)",
-          "(1,M)"]])
+TABLE = ([["(7,G)", "(7,FF)", "(7,F)", "(7,EE)", "(7,E)", "(7,DD)", "(7,D)", "(7,CC)", "(7,C)", "(7,BB)", "(7,B)", "(7,AA)",
+          "(7,A)"],
+          ["(66,G)", "(66,FF)", "(66,F)", "(66,EE)", "(66,E)", "(66,DD)", "(66,D)", "(66,CC)", "(66,C)", "(66,BB)", "(66,B)",
+           "(66,AA)", "(66,A)"]   ,
+          ["(6,G)", "(6,FF)", "(6,F)", "(6,EE)", "(6,E)", "(6,DD)", "(6,D)", "(6,CC)", "(6,C)", "(6,BB)", "(6,B)",
+           "(6,AA)", "(6,A)"],
+          [ "(55,G)", "(55,FF)", "(55,F)", "(55,EE)", "(55,E)", "(55,DD)", "(55,D)", "(55,CC)", "(55,C)", "(55,BB)", "(55,B)", "(55,AA)",
+            "(55,A)"]  ,
+          ["(5,G)", "(5,FF)", "(5,F)", "(5,EE)", "(5,E)", "(5,DD)", "(5,D)", "(5,CC)", "(5,C)", "(5,BB)", "(5,B)",
+           "(5,AA)",  "(5,A)"],
+          ["(44,G)", "(44,FF)", "(44,F)", "(44,EE)", "(44,E)", "(44,DD)", "(44,D)", "(44,CC)", "(44,C)", "(44,BB)", "(44,B)",
+           "(44,AA)", "(44,A)"],
+          ["(4,G)", "(4,FF)", "(4,F)", "(4,EE)", "(4,E)", "(4,DD)", "(4,D)", "(4,CC)", "(4,C)", "(4,BB)", "(4,B)",
+           "(4,AA)", "(4,A)"],
+          ["(33,G)", "(33,FF)", "(33,F)", "(33,EE)", "(33,E)", "(33,DD)", "(33,D)", "(33,CC)", "(33,C)", "(33,BB)", "(33,B)",
+           "(33,AA)", "(33,A)"],
+          ["(3,G)", "(3,FF)", "(3,F)", "(3,EE)", "(3,E)", "(3,DD)", "(3,D)", "(3,CC)", "(3,C)", "(3,BB)", "(3,B)",
+           "(3,AA)", "(3,A)"],
+          ["(22,G)", "(22,FF)", "(22,F)", "(22,EE)", "(22,E)", "(22,DD)", "(22,D)", "(2,CC)", "(22,C)", "(22,BB)", "(22,B)",
+           "(22,AA)", "(22,A)"],
+          ["(2,G)", "(2,FF)", "(2,F)", "(2,EE)", "(2,E)", "(2,DD)", "(2,D)", "(2,CC)", "(2,C)", "(2,BB)", "(2,B)",
+           "(2,AA)", "(2,A)"],
+          ["(11,G)", "(11,FF)", "(11,F)", "(11,EE)", "(11,E)", "(11,DD)", "(11,D)", "(11,CC)", "(11,C)", "(11,BB)", "(11,B)",
+           "(11,AA)", "(11,A)"],
+         ["(1,G)", "(1,FF)", "(1,F)", "(1,EE)", "(1,E)", "(1,DD)", "(1,D)", "(1,CC)", "(1,C)", "(1,BB)", "(1,B)", "(1,AA)",
+          "(1,A)"]])
 
 #
 # ManualPlanning
@@ -311,22 +324,18 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       pos = [0, 0, 0]
       targetList.GetNthFiducialPosition(n, pos)
       temp_in = [pos[0], pos[1], pos[2], 1]
-      temp_out = [pos[0], pos[1], 13, 1]
+      temp_out = [pos[0], pos[1], 0, 1]
+      print(temp_out)
       transform.MultiplyPoint(temp_in,temp_out)
-
-
+      print(temp_out)
       index_a = round((temp_out[0])/5.0)
 
       index_b = round((temp_out[1])/5.0)
 
-      print(temp_out)
-      print(index_a)
-      print(index_b)
-
-      temp_str = temp_str+str(TABLE[index_b+6][index_a+6])+";"+str(int(temp_out[2]))+" mm"+";"
+      temp_str = temp_str+str(TABLE[index_b+6][index_a+6])+";"+str(int(-temp_out[2])+OFFSET)+" mm"+";"
 
       self.ui.tableWidget.setItem(n, 1, qt.QTableWidgetItem(TABLE[index_b+6][index_a+6]))
-      self.ui.tableWidget.setItem(n, 2, qt.QTableWidgetItem(str(int(temp_out[2]))+" mm"))
+      self.ui.tableWidget.setItem(n, 2, qt.QTableWidgetItem(str(int(-temp_out[2])+OFFSET)+" mm"))
 
 
 
@@ -345,6 +354,12 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       needle1.AddFiducial(tip_out[0], tip_out[1], tip_out[2])
       needle1.AddFiducial(base_out[0], base_out[1], base_out[2])
       transform.Invert()
+
+      #print expected error based on the hole definition:
+      errorR = f'{(tip_out[0]-pos[0]):.1f}'
+      errorA = f'{(tip_out[1]-pos[1]):.1f}'
+      self.ui.expError.setText("  R: "+str(errorR)+" A:"+str(errorA))
+
     self.holes.SetText(temp_str)
 
   def showIceball(self):
@@ -595,8 +610,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         transform.Translate(pos[0], pos[1], pos[2]-10)
         transformNode.SetMatrixTransformToParent(transform.GetMatrix())
 
-  
-  
+
   def onApplyButton(self):
     """
     Run processing when user clicks "Apply" button.
@@ -686,7 +700,7 @@ class ManualPlanningLogic(ScriptedLoadableModuleLogic):
     transform = vtk.vtkTransform()
     transform.Translate(pos[0], pos[1], pos[2])
     transform.RotateX(ang1)
-    transform.RotateY(ang2)
+    transform.RotateY(-ang2)
     transformNode.SetMatrixTransformToParent(transform.GetMatrix())
 
 

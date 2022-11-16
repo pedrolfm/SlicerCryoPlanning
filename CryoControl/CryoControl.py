@@ -429,18 +429,13 @@ class CryoControlWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     zf = slicer.modules.zframeregistrationwithroi
     slicer.util.selectModule(zf)
 
-    
-    
   def onApplySegButton(self):    
     sg = slicer.modules.segmenteditor
     slicer.util.selectModule(sg)
 
-
   def onApplyManualButton(self):   
     manual = slicer.modules.manualplanning
     slicer.util.selectModule(manual)
-
-
 
   def checkForNewVolumes(self):
     # Check if there is a zFrame registration
