@@ -12,7 +12,8 @@ import qt
 # Z Frame offset:
 HORIZONTAL = -64.25 #-68.3 # Reviewed on Nov 11 2022, white board used for animal experiments, one line of lego bricks
 VERTICAL = -103.5
-OFFSET = 13.0 #tempalte width
+OFFSET = -10.0 #tempalte width using the device
+#OFFSET = 10 # manual insertion
 
 
 TABLE = ([["(7,G)", "(7,FF)", "(7,F)", "(7,EE)", "(7,E)", "(7,DD)", "(7,D)", "(7,CC)", "(7,C)", "(7,BB)", "(7,B)", "(7,AA)",
@@ -182,7 +183,22 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 #TODO:
     # Save the angles in a text node, then CryoControl can get it
     # Actually, it is better to start the text node in the cryocontrol and this code just grab and update
-    
+
+    string_temp = ("Transformellipse_1")
+    transformNodeEllipse1 = slicer.vtkMRMLLinearTransformNode()
+    transformNodeEllipse1.SetName(string_temp)
+    slicer.mrmlScene.AddNode(transformNodeEllipse1)
+
+    string_temp = ("Transformellipse_2")
+    transformNodeEllipse2 = slicer.vtkMRMLLinearTransformNode()
+    transformNodeEllipse2.SetName(string_temp)
+    slicer.mrmlScene.AddNode(transformNodeEllipse2)
+
+    string_temp = ("Transformellipse_3")
+    transformNodeEllipse3 = slicer.vtkMRMLLinearTransformNode()
+    transformNodeEllipse3.SetName(string_temp)
+    slicer.mrmlScene.AddNode(transformNodeEllipse3)
+
     self.ui.MarkupsWidget.connect("activeMarkupsPlaceModeChanged(bool)", self.updateMarkupFiducial)
 
     try:
@@ -358,7 +374,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
       #print expected error based on the hole definition:
       errorR = f'{(tip_out[0]-pos[0]):.1f}'
       errorA = f'{(tip_out[1]-pos[1]):.1f}'
-      self.ui.expError.setText("  R: "+str(errorR)+" A:"+str(errorA))
+      self.ui.expError.setText("  R: "+str(errorR)+" A:"+str(errorA)+"  ||  For template: Ang X: "+str(-self.ui.horizontalSlider.value)+"  Ang Y: "+str(-self.ui.horizontalSlider_2.value))
 
     self.holes.SetText(temp_str)
 
@@ -370,6 +386,7 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
 
       string_temp = ("ellipse_%s") % (n+1)
       model = slicer.util.getNode(string_temp)
+      self.updateMarkupFiducial()
       if self.ui.IceballcheckBox.isChecked():
         model.SetDisplayVisibility(1)
       else:
@@ -592,7 +609,6 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
     targetList = slicer.util.getNode('target')
     nOfPoint = targetList.GetNumberOfMarkups()
     self.ui.tableWidget.setRowCount(nOfPoint)
-    transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
     
     for n in range(0,nOfPoint):
         string_temp = ("Needle #%s") % (n+1)
@@ -600,8 +616,16 @@ class ManualPlanningWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         string_temp = ("ellipse_%s") % (n+1)
         model = slicer.util.getNode(string_temp)
         model.GetDisplayNode().SetSliceIntersectionVisibility(True)
-        
-        transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
+        temp_name = 'Transform' + string_temp
+        try:
+          transformNode = slicer.util.getNode(temp_name)
+        except:
+          transformNode = slicer.vtkMRMLLinearTransformNode()
+          transformNode.SetName(temp_name)
+          slicer.mrmlScene.AddNode(transformNode)
+
+
+        #transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
         model.SetAndObserveTransformNodeID(transformNode.GetID())
         transform = vtk.vtkTransform()
         pos = [0,0,0]
@@ -694,8 +718,9 @@ class ManualPlanningLogic(ScriptedLoadableModuleLogic):
   def updateIceballPose(self,n,ang1,ang2,pos):
     string_temp = ("ellipse_%s") % (n+1)
     model = slicer.util.getNode(string_temp)
-        
-    transformNode = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLTransformNode")
+
+    temp_name = 'Transform' + string_temp
+    transformNode = slicer.util.getNode(temp_name)
     model.SetAndObserveTransformNodeID(transformNode.GetID())
     transform = vtk.vtkTransform()
     transform.Translate(pos[0], pos[1], pos[2])
@@ -752,6 +777,7 @@ class ManualPlanningTest(ScriptedLoadableModuleTest):
     self.assertEqual(inputScalarRange[1], 695)
 
     outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode")
+    outputVolume.SetName("first")
     threshold = 100
 
     # Test the module logic
